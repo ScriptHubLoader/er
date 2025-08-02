@@ -18,8 +18,8 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 -- URLs for your hosted scripts
 -- You MUST replace these with the raw URLs of your files.
 -- =====================================================================================================================
-local eggRandomizerURL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/EggRandomizer.lua"
-local petLevelUpAndMutationURL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/PetLevelUpAndMutation.lua"
+local eggRandomizerURL = "https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/er1"
+local petLevelUpAndMutationURL = "https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp"
 
 -- =====================================================================================================================
 -- Utility Functions (Shared by all scripts)
