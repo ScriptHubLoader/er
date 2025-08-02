@@ -251,12 +251,10 @@ versionLabel.TextColor3 = Color3.fromRGB(80, 110, 70) -- Set color before adding
 versionLabel.TextStrokeTransparency = 1
 addTextShadow(versionLabel)
 
--- Load other scripts using loadstring
-local eggScriptCode = [[ -- Content of Egg Randomizer Script here ]]
-local petMutationScriptCode = [[ -- Content of Age Pet & Mutation Script here ]]
-
-loadstring(eggScriptCode)()
-loadstring(petMutationScriptCode)()
+-- Load other scripts using loadstring and game:HttpGet
+-- You MUST replace these URLs with the actual raw content URLs of your scripts.
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/eggrandomizer"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp"))()
 
 -- Dragging logic for minimized button
 local minimizedBtnDrag = false
