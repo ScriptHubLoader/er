@@ -1,7 +1,4 @@
--- =====================================================================================================================
--- MainMenu.lua: This script is the entry point. It creates the main UI, the button menu, and handles dynamic script loading from URLs.
--- =====================================================================================================================
-
+-- 🌿 Pixiemo Hub – Draggable Minimized Button + Corrected Logic + Integrated Features
 -- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -9,21 +6,11 @@ local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ContentProvider = game:GetService("ContentProvider")
-local HttpService = game:GetService("HttpService")
+local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- =====================================================================================================================
--- URLs for your hosted scripts
--- You MUST replace these with the raw URLs of your files.
--- =====================================================================================================================
-local eggRandomizerURL = "https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/er1"
-local petLevelUpAndMutationURL = "https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp"
-
--- =====================================================================================================================
--- Utility Functions (Shared by all scripts)
--- =====================================================================================================================
+-- Utility Functions
 local function applyUICorner(inst, radius)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = radius or UDim.new(0, 10)
@@ -39,184 +26,330 @@ local function applyUIStroke(inst, color, thickness, transparency)
 end
 
 local function addTextShadow(label)
+	-- Ensure we don't create duplicates if already styled
 	if label:FindFirstChild("Shadow") then return end
-	local shadow = Instance.new("TextLabel")
+
+	local shadow = Instance.new("TextLabel") -- Create new TextLabel for shadow
 	shadow.TextColor3 = Color3.fromRGB(0, 0, 0)
 	shadow.TextTransparency = 0.3
-	shadow.Position = UDim2.new(0.005, 0, 0.005, 0)
+	shadow.Position = UDim2.new(0, 2, 0, 2)
 	shadow.ZIndex = label.ZIndex - 1
-	shadow.Size = UDim2.new(1, 0, 1, 0)
-	shadow.Text = label.Text
-	shadow.Font = label.Font
-	shadow.TextScaled = label.TextScaled
-	shadow.Parent = label
-	shadow.BackgroundTransparency = 1
+	shadow.TextStrokeTransparency = 1
+	shadow.Name = "Shadow"
+	shadow.Font = label.Font -- Inherit font
+	shadow.Text = label.Text -- Inherit text
+	shadow.TextSize = label.TextSize -- Inherit text size
+	shadow.TextXAlignment = label.TextXAlignment -- Inherit text alignment
+	shadow.TextYAlignment = label.TextYAlignment -- Inherit text alignment
+	shadow.Size = label.Size -- Inherit size
+	shadow.BackgroundTransparency = 1 -- Keep background transparent
+	shadow.Parent = label -- Parent directly to the label to keep it contained
 end
 
-local sharedFunctions = {
-    applyUICorner = applyUICorner,
-    applyUIStroke = applyUIStroke,
-    addTextShadow = addTextShadow
-}
+local function applyStyledText(label)
+	label.Font = Enum.Font.FredokaOne
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextStrokeTransparency = 1
+	addTextShadow(label)
+end
 
--- =====================================================================================================================
--- Main GUI Setup
--- =====================================================================================================================
+local function addBounceHoverEffect(button)
+	local originalSize = button.Size
+	button.MouseEnter:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = originalSize + UDim2.new(0, 5, 0, 3)}):Play()
+	end)
+	button.MouseLeave:Connect(function()
+		TweenService:Create(button, TweenInfo.new(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = originalSize}):Play()
+	end)
+end
+
+-- Init GUI
+local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("PixiemoGUI")
+if gui then gui:Destroy() end
+
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = PlayerGui
-screenGui.Name = "MainGui"
+screenGui.Name = "PixiemoGUI"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Parent = screenGui
-mainFrame.Name = "mainFrame"
-mainFrame.Size = UDim2.new(0.2, 0, 0.5, 0)
-mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset / 2, 0.5, -mainFrame.Size.Y.Offset / 2)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false
-applyUICorner(mainFrame)
-applyUIStroke(mainFrame, Color3.fromRGB(50, 50, 50))
-
--- Title and status labels
-local headerFrame = Instance.new("Frame")
-headerFrame.Parent = mainFrame
-headerFrame.Size = UDim2.new(1, 0, 0.1, 0)
-headerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-applyUICorner(headerFrame)
-applyUIStroke(headerFrame, Color3.fromRGB(50, 50, 50))
+-- Loading Progress Bar (Cartoonish Animated)
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(0, 300, 0, 120) -- Increased height to 120
+loadingFrame.Position = UDim2.new(0.5, -150, 0.5, -60) -- Adjusted position for new height
+loadingFrame.BackgroundColor3 = Color3.fromRGB(195, 235, 185)
+loadingFrame.Parent = screenGui
+applyUICorner(loadingFrame, UDim.new(0, 15))
+applyUIStroke(loadingFrame, Color3.fromRGB(150, 190, 130), 3, 0)
 
 local welcomeLabel = Instance.new("TextLabel")
-welcomeLabel.Parent = headerFrame
-welcomeLabel.Text = "Pixiemo Hub"
-welcomeLabel.Size = UDim2.new(1, 0, 0.5, 0)
-welcomeLabel.Position = UDim2.new(0, 0, 0, 0)
+welcomeLabel.Size = UDim2.new(1, 0, 0, 30)
+welcomeLabel.Position = UDim2.new(0.5, 0, 0, 15) -- Centered horizontally, 15px from top
+welcomeLabel.AnchorPoint = Vector2.new(0.5, 0)
 welcomeLabel.BackgroundTransparency = 1
-welcomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-welcomeLabel.TextScaled = true
+welcomeLabel.Font = Enum.Font.FredokaOne
+welcomeLabel.Text = "Welcome to Pixiemo Hub"
+welcomeLabel.TextSize = 24
+welcomeLabel.TextColor3 = Color3.fromRGB(80, 110, 70)
+welcomeLabel.Parent = loadingFrame
+-- Only apply shadow once, applyStyledText handles it
+welcomeLabel.Font = Enum.Font.FredokaOne -- Set font before adding shadow
+welcomeLabel.TextColor3 = Color3.fromRGB(80, 110, 70) -- Set color before adding shadow
+welcomeLabel.TextStrokeTransparency = 1
 addTextShadow(welcomeLabel)
 
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Parent = headerFrame
-statusLabel.Text = "Status: Idle"
-statusLabel.Size = UDim2.new(1, 0, 0.5, 0)
-statusLabel.Position = UDim2.new(0, 0, 0.5, 0)
+
+local statusLabel = Instance.new("TextLabel") -- Renamed from loadingLabel to statusLabel for general use
+statusLabel.Size = UDim2.new(1, 0, 0, 20)
+statusLabel.Position = UDim2.new(0.5, 0, 0, 45) -- Centered horizontally, 45px from top
+statusLabel.AnchorPoint = Vector2.new(0.5, 0)
 statusLabel.BackgroundTransparency = 1
-statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-statusLabel.TextScaled = true
+statusLabel.Font = Enum.Font.FredokaOne
+statusLabel.Text = "Loading Scripts..."
+statusLabel.TextSize = 18
+statusLabel.TextColor3 = Color3.fromRGB(80, 110, 70)
+statusLabel.Parent = loadingFrame
+-- Only apply shadow once, applyStyledText handles it
+statusLabel.Font = Enum.Font.FredokaOne -- Set font before adding shadow
+statusLabel.TextColor3 = Color3.fromRGB(80, 110, 70) -- Set color before adding shadow
+statusLabel.TextStrokeTransparency = 1
 addTextShadow(statusLabel)
 
--- Menu Page
-local menuPage = Instance.new("Frame")
-menuPage.Parent = mainFrame
-menuPage.Name = "menuPage"
-menuPage.Size = UDim2.new(1, 0, 0.9, 0)
-menuPage.Position = UDim2.new(0, 0, 0.1, 0)
-menuPage.BackgroundTransparency = 1
-
--- Loading Animation and Initial Setup
-local loadingFrame = Instance.new("Frame")
-loadingFrame.Parent = screenGui
-loadingFrame.Size = UDim2.new(0.3, 0, 0.1, 0)
-loadingFrame.Position = UDim2.new(0.5, -loadingFrame.Size.X.Offset/2, 0.5, -loadingFrame.Size.Y.Offset/2)
-loadingFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-applyUICorner(loadingFrame)
-applyUIStroke(loadingFrame, Color3.fromRGB(50, 50, 50))
-
-local loadingLabel = Instance.new("TextLabel")
-loadingLabel.Parent = loadingFrame
-loadingLabel.Text = "Loading..."
-loadingLabel.Size = UDim2.new(1, 0, 0.5, 0)
-loadingLabel.Position = UDim2.new(0, 0, 0.1, 0)
-loadingLabel.BackgroundTransparency = 1
-loadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-loadingLabel.TextScaled = true
-
 local progressBar = Instance.new("Frame")
-progressBar.Parent = loadingFrame
-progressBar.Size = UDim2.new(0.9, 0, 0.2, 0)
-progressBar.Position = UDim2.new(0.05, 0, 0.6, 0)
-progressBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-applyUICorner(progressBar)
+progressBar.Size = UDim2.new(1, -20, 0, 25) -- Adjusted size to fit within the loadingFrame with padding
+progressBar.Position = UDim2.new(0.5, 0, 0, 85) -- Centered horizontally, 85px from top
+progressBar.AnchorPoint = Vector2.new(0.5, 0)
+progressBar.BackgroundColor3 = Color3.fromRGB(134, 185, 112)
+progressBar.Parent = loadingFrame -- Now parented to loadingFrame
+applyUICorner(progressBar, UDim.new(0, 12))
 
 local progressFill = Instance.new("Frame")
+progressFill.Size = UDim2.new(0, 0, 1, 0) -- Starts at 0 width
+progressFill.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
 progressFill.Parent = progressBar
-progressFill.Size = UDim2.new(0, 0, 1, 0)
-progressFill.Position = UDim2.new(0, 0, 0, 0)
-progressFill.BackgroundColor3 = Color3.fromRGB(150, 255, 150)
-applyUICorner(progressFill)
+applyUICorner(progressFill, UDim.new(0, 12))
 
-local loadingTween = TweenService:Create(progressFill, TweenInfo.new(3, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)})
-loadingTween:Play()
-loadingTween.Completed:Connect(function()
-    task.wait(0.2)
-    loadingFrame:Destroy()
-    mainFrame.Visible = true
-    mainFrame.Size = UDim2.new(0,0,0,0)
-    TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0.2, 0, 0.5, 0)
-    }):Play()
-end)
+-- Minimized Button
+local minimizedButton = Instance.new("TextButton")
+minimizedButton.Name = "MinimizedButton"
+minimizedButton.Text = "Pixiemo Hub"
+minimizedButton.Size = UDim2.new(0, 160, 0, 32)
+minimizedButton.Position = UDim2.new(1, -170, 0, 10)
+minimizedButton.Visible = false
+minimizedButton.BackgroundColor3 = Color3.fromRGB(134, 185, 112)
+minimizedButton.TextSize = 18
+minimizedButton.Parent = screenGui
+minimizedButton.AutoButtonColor = false -- Prevents color change on click while dragging
+applyUICorner(minimizedButton, UDim.new(1, 0))
+applyUIStroke(minimizedButton, Color3.fromRGB(80, 110, 70), 2, 0)
+applyStyledText(minimizedButton)
 
--- =====================================================================================================================
--- Button Logic for loading other scripts
--- =====================================================================================================================
-local function loadScript(scriptUrl, scriptName)
-    local success, scriptContent = pcall(function()
-        return game:HttpGet(scriptUrl)
-    end)
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 420, 0, 330) -- Increased height to 330
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(195, 235, 185)
+mainFrame.Parent = screenGui
+mainFrame.Visible = false -- Initially hidden
+applyUICorner(mainFrame, UDim.new(0, 25))
+applyUIStroke(mainFrame, Color3.fromRGB(150, 190, 130), 3, 0)
 
-    if not success or not scriptContent then
-        statusLabel.Text = "Status: Error fetching " .. scriptName .. ": " .. tostring(scriptContent)
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        return
-    end
+-- Container for scale animation
+local scaleContainer = Instance.new("Frame")
+scaleContainer.Size = UDim2.new(1, 0, 1, 0)
+scaleContainer.BackgroundTransparency = 1
+scaleContainer.Parent = mainFrame
 
-    local success2, func = pcall(function()
-        return loadstring(scriptContent)
-    end)
+local scale = Instance.new("UIScale")
+scale.Scale = 1
+scale.Parent = scaleContainer
 
-    if not success2 then
-        statusLabel.Text = "Status: Error loading " .. scriptName .. ": " .. tostring(func)
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        return
-    end
+-- Header
+local headerFrame = Instance.new("Frame")
+headerFrame.Size = UDim2.new(1, 0, 0, 35)
+headerFrame.BackgroundColor3 = Color3.fromRGB(134, 185, 112)
+headerFrame.Parent = scaleContainer
+headerFrame.BorderSizePixel = 0
+headerFrame.Active = true -- Make it responsive to input
+applyUICorner(headerFrame, UDim.new(0, 25))
 
-    if func then
-        pcall(func, mainFrame, statusLabel, sharedFunctions)
-        statusLabel.Text = "Status: " .. scriptName .. " loaded."
-        statusLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
-    else
-        statusLabel.Text = "Status: Failed to create function for " .. scriptName .. "."
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-    end
+local header = Instance.new("TextLabel")
+header.Text = "🥚 Egg Randomizer"
+header.TextSize = 22
+header.Size = UDim2.new(1, 0, 1, 0)
+header.BackgroundTransparency = 1
+header.Parent = headerFrame
+applyStyledText(header)
+
+-- Minimize Button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 22, 0, 22)
+minimizeBtn.AnchorPoint = Vector2.new(1, 0.5)
+minimizeBtn.Position = UDim2.new(1, -12, 0.5, 0)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 212, 59)
+minimizeBtn.Text = ""
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Parent = headerFrame
+applyUICorner(minimizeBtn, UDim.new(1, 0))
+
+local minus = Instance.new("Frame")
+minus.Size = UDim2.new(0.6, 0, 0.15, 0)
+minus.Position = UDim2.new(0.5, 0, 0.5, 0)
+minus.AnchorPoint = Vector2.new(0.5, 0.5)
+minus.BackgroundColor3 = Color3.new(1, 1, 1)
+minus.BorderSizePixel = 0
+minus.Parent = minimizeBtn
+applyUICorner(minus, UDim.new(1, 0))
+
+-- Pages Container & Pages
+local pagesContainer = Instance.new("Frame")
+pagesContainer.Size = UDim2.new(1, 0, 1, -55) -- Adjusted height to account for header and version label
+pagesContainer.Position = UDim2.new(0, 0, 0, 35)
+pagesContainer.BackgroundTransparency = 1
+pagesContainer.Parent = scaleContainer
+
+local mainPage = Instance.new("Frame")
+mainPage.Size = UDim2.new(1, 0, 1, 0)
+mainPage.BackgroundTransparency = 1
+mainPage.Parent = pagesContainer
+
+local otherScriptsPage = Instance.new("Frame")
+otherScriptsPage.Size = UDim2.new(1, 0, 1, 0)
+otherScriptsPage.BackgroundTransparency = 1
+otherScriptsPage.Visible = false
+otherScriptsPage.Parent = pagesContainer
+
+local mutationPage = Instance.new("Frame")
+mutationPage.Size = UDim2.new(1, 0, 1, 0)
+mutationPage.BackgroundTransparency = 1
+mutationPage.Visible = false
+mutationPage.Parent = pagesContainer
+
+local helpPage = Instance.new("Frame")
+helpPage.Size = UDim2.new(1, 0, 1, 0)
+helpPage.BackgroundTransparency = 1
+helpPage.Visible = false
+helpPage.Parent = pagesContainer
+
+
+-- Version Label for Main Frame
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Name = "VersionLabel"
+versionLabel.Size = UDim2.new(1, 0, 0, 20)
+versionLabel.Position = UDim2.new(0.5, 0, 1, -20) -- Position at the bottom, 20px from bottom edge
+versionLabel.AnchorPoint = Vector2.new(0.5, 1) -- Anchor to the bottom-center
+versionLabel.BackgroundTransparency = 1
+versionLabel.Font = Enum.Font.FredokaOne
+versionLabel.Text = "Made by Pixiemo - V3.09" -- Renamed text
+versionLabel.TextSize = 14
+versionLabel.TextColor3 = Color3.fromRGB(80, 110, 70)
+versionLabel.Parent = mainFrame
+-- Only apply shadow once, applyStyledText handles it
+versionLabel.Font = Enum.Font.FredokaOne -- Set font before adding shadow
+versionLabel.TextColor3 = Color3.fromRGB(80, 110, 70) -- Set color before adding shadow
+versionLabel.TextStrokeTransparency = 1
+addTextShadow(versionLabel)
+
+-- Load other scripts using loadstring
+local eggScriptCode = [[ -- Content of Egg Randomizer Script here ]]
+local petMutationScriptCode = [[ -- Content of Age Pet & Mutation Script here ]]
+
+loadstring(eggScriptCode)()
+loadstring(petMutationScriptCode)()
+
+-- Dragging logic for minimized button
+local minimizedBtnDrag = false
+local minimizedBtnOffset = Vector2.new(0, 0)
+local function startDragMinimizedBtn(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		minimizedBtnDrag = true
+		minimizedBtnOffset = input.Position - minimizedButton.AbsolutePosition
+		UserInputService.MouseIconEnabled = false
+	end
+end
+local function endDragMinimizedBtn()
+	minimizedBtnDrag = false
+	UserInputService.MouseIconEnabled = true
+end
+local function updateDragMinimizedBtn(input)
+	if minimizedBtnDrag then
+		minimizedButton.Position = UDim2.new(0, input.Position.X - minimizedBtnOffset.X, 0, input.Position.Y - minimizedBtnOffset.Y)
+	end
 end
 
-local function createButton(name, text, position)
-    local button = Instance.new("TextButton")
-    button.Parent = menuPage
-    button.Name = name
-    button.Size = UDim2.new(0.9, 0, 0.1, 0)
-    button.Position = UDim2.new(0.05, 0, position, 0)
-    button.Text = text
-    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextScaled = true
-    applyUICorner(button)
-    applyUIStroke(button, Color3.fromRGB(70, 70, 70))
-    return button
+minimizedButton.InputBegan:Connect(startDragMinimizedBtn)
+minimizedButton.InputEnded:Connect(endDragMinimizedBtn)
+UserInputService.InputChanged:Connect(updateDragMinimizedBtn)
+
+-- Dragging logic for header frame
+local drag = false
+local dragStart = Vector2.new(0, 0)
+local function startDrag(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType.Touch then
+		drag = true
+		dragStart = input.Position
+		UserInputService.MouseIconEnabled = false
+	end
+end
+local function endDrag()
+	drag = false
+	UserInputService.MouseIconEnabled = true
+end
+local function updateDrag(input)
+	if drag then
+		local delta = input.Position - dragStart
+		mainFrame.Position = mainFrame.Position + UDim2.new(0, delta.X, 0, delta.Y)
+		dragStart = input.Position
+	end
+end
+headerFrame.InputBegan:Connect(startDrag)
+headerFrame.InputEnded:Connect(endDrag)
+UserInputService.InputChanged:Connect(updateDrag)
+
+
+-- GUI Animations
+local function toggleGUI(show)
+	if show then
+		mainFrame.Visible = true
+		minimizedButton.Visible = false
+		scale.Scale = 0.5
+		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Scale = 1}):Play()
+	else
+		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Scale = 0.5}):Play()
+		task.delay(0.2, function()
+			mainFrame.Visible = false
+			minimizedButton.Visible = true
+		end)
+	end
 end
 
-local eggRandomizerButton = createButton("EggRandomizerButton", "Egg Randomizer", 0)
-eggRandomizerButton.MouseButton1Click:Connect(function()
-    loadScript(eggRandomizerURL, "Egg Randomizer")
+-- Button connections
+minimizeBtn.MouseButton1Click:Connect(function()
+	toggleGUI(false)
 end)
 
-local petLevelUpButton = createButton("PetLevelUpButton", "Pet Level Up to 50", 0.15)
-petLevelUpButton.MouseButton1Click:Connect(function()
-    loadScript(petLevelUpAndMutationURL, "Pet Level Up")
+minimizedButton.MouseButton1Click:Connect(function()
+	toggleGUI(true)
 end)
 
-local mutationEspButton = createButton("MutationEspButton", "Mutation ESP", 0.3)
-mutationEspButton.MouseButton1Click:Connect(function()
-    loadScript(petLevelUpAndMutationURL, "Mutation ESP")
-end)
+-- Main loading logic and startup
+local function loadAndShow()
+	local assetsToPreload = {
+		-- Add asset IDs from your GUI here
+	}
+	ContentProvider:PreloadAsync(assetsToPreload)
+
+	local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	local fillGoal = {Size = UDim2.new(1, 0, 1, 0)}
+	
+	statusLabel.Text = "Loading Assets..."
+	TweenService:Create(progressFill, tweenInfo, fillGoal):Play()
+	
+	task.delay(0.6, function()
+		loadingFrame.Visible = false
+		toggleGUI(true)
+	end)
+end
+
+loadAndShow()
