@@ -253,20 +253,29 @@ addTextShadow(versionLabel)
 
 -- Load other scripts using game:HttpGet
 -- Ensure you have the correct raw URLs for your scripts here.
-local eggScriptCode = game:HttpGet(""https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/eggrandomizer")
-local petMutationScriptCode = game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp")
+local eggScriptCode = game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/eggrandomizer")
+local petMutationScriptCode = game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp"))
 
 -- Create a new environment for the loaded scripts and pass the necessary variables.
 local function loadAndExecuteScript(code)
 	local f = load(code)
 	local newEnv = {
 		screenGui = screenGui,
+		mainFrame = mainFrame,
+		pagesContainer = pagesContainer,
+		mainPage = mainPage,
+		otherScriptsPage = otherScriptsPage,
+		mutationPage = mutationPage,
 		TweenService = TweenService,
 		Players = Players,
 		Workspace = Workspace,
 		RunService = RunService,
 		LocalPlayer = LocalPlayer,
-		-- Pass any other necessary globals to the script
+		-- Include all other global services and functions that the loaded scripts might need
+		applyUICorner = applyUICorner,
+		applyUIStroke = applyUIStroke,
+		addTextShadow = addTextShadow,
+		applyStyledText = applyStyledText,
 	}
 	setfenv(f, newEnv)
 	f()
