@@ -1,0 +1,222 @@
+-- =====================================================================================================================
+-- MainMenu.lua: This script is the entry point. It creates the main UI, the button menu, and handles dynamic script loading from URLs.
+-- =====================================================================================================================
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ContentProvider = game:GetService("ContentProvider")
+local HttpService = game:GetService("HttpService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- =====================================================================================================================
+-- URLs for your hosted scripts
+-- You MUST replace these with the raw URLs of your files.
+-- =====================================================================================================================
+local eggRandomizerURL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/EggRandomizer.lua"
+local petLevelUpAndMutationURL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/PetLevelUpAndMutation.lua"
+
+-- =====================================================================================================================
+-- Utility Functions (Shared by all scripts)
+-- =====================================================================================================================
+local function applyUICorner(inst, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = radius or UDim.new(0, 10)
+	corner.Parent = inst
+end
+
+local function applyUIStroke(inst, color, thickness, transparency)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color or Color3.new(0, 0, 0)
+	stroke.Thickness = thickness or 1
+	stroke.Transparency = transparency or 0
+	stroke.Parent = inst
+end
+
+local function addTextShadow(label)
+	if label:FindFirstChild("Shadow") then return end
+	local shadow = Instance.new("TextLabel")
+	shadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+	shadow.TextTransparency = 0.3
+	shadow.Position = UDim2.new(0.005, 0, 0.005, 0)
+	shadow.ZIndex = label.ZIndex - 1
+	shadow.Size = UDim2.new(1, 0, 1, 0)
+	shadow.Text = label.Text
+	shadow.Font = label.Font
+	shadow.TextScaled = label.TextScaled
+	shadow.Parent = label
+	shadow.BackgroundTransparency = 1
+end
+
+local sharedFunctions = {
+    applyUICorner = applyUICorner,
+    applyUIStroke = applyUIStroke,
+    addTextShadow = addTextShadow
+}
+
+-- =====================================================================================================================
+-- Main GUI Setup
+-- =====================================================================================================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = PlayerGui
+screenGui.Name = "MainGui"
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Parent = screenGui
+mainFrame.Name = "mainFrame"
+mainFrame.Size = UDim2.new(0.2, 0, 0.5, 0)
+mainFrame.Position = UDim2.new(0.5, -mainFrame.Size.X.Offset / 2, 0.5, -mainFrame.Size.Y.Offset / 2)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+applyUICorner(mainFrame)
+applyUIStroke(mainFrame, Color3.fromRGB(50, 50, 50))
+
+-- Title and status labels
+local headerFrame = Instance.new("Frame")
+headerFrame.Parent = mainFrame
+headerFrame.Size = UDim2.new(1, 0, 0.1, 0)
+headerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+applyUICorner(headerFrame)
+applyUIStroke(headerFrame, Color3.fromRGB(50, 50, 50))
+
+local welcomeLabel = Instance.new("TextLabel")
+welcomeLabel.Parent = headerFrame
+welcomeLabel.Text = "Pixiemo Hub"
+welcomeLabel.Size = UDim2.new(1, 0, 0.5, 0)
+welcomeLabel.Position = UDim2.new(0, 0, 0, 0)
+welcomeLabel.BackgroundTransparency = 1
+welcomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+welcomeLabel.TextScaled = true
+addTextShadow(welcomeLabel)
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Parent = headerFrame
+statusLabel.Text = "Status: Idle"
+statusLabel.Size = UDim2.new(1, 0, 0.5, 0)
+statusLabel.Position = UDim2.new(0, 0, 0.5, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusLabel.TextScaled = true
+addTextShadow(statusLabel)
+
+-- Menu Page
+local menuPage = Instance.new("Frame")
+menuPage.Parent = mainFrame
+menuPage.Name = "menuPage"
+menuPage.Size = UDim2.new(1, 0, 0.9, 0)
+menuPage.Position = UDim2.new(0, 0, 0.1, 0)
+menuPage.BackgroundTransparency = 1
+
+-- Loading Animation and Initial Setup
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Parent = screenGui
+loadingFrame.Size = UDim2.new(0.3, 0, 0.1, 0)
+loadingFrame.Position = UDim2.new(0.5, -loadingFrame.Size.X.Offset/2, 0.5, -loadingFrame.Size.Y.Offset/2)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+applyUICorner(loadingFrame)
+applyUIStroke(loadingFrame, Color3.fromRGB(50, 50, 50))
+
+local loadingLabel = Instance.new("TextLabel")
+loadingLabel.Parent = loadingFrame
+loadingLabel.Text = "Loading..."
+loadingLabel.Size = UDim2.new(1, 0, 0.5, 0)
+loadingLabel.Position = UDim2.new(0, 0, 0.1, 0)
+loadingLabel.BackgroundTransparency = 1
+loadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+loadingLabel.TextScaled = true
+
+local progressBar = Instance.new("Frame")
+progressBar.Parent = loadingFrame
+progressBar.Size = UDim2.new(0.9, 0, 0.2, 0)
+progressBar.Position = UDim2.new(0.05, 0, 0.6, 0)
+progressBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+applyUICorner(progressBar)
+
+local progressFill = Instance.new("Frame")
+progressFill.Parent = progressBar
+progressFill.Size = UDim2.new(0, 0, 1, 0)
+progressFill.Position = UDim2.new(0, 0, 0, 0)
+progressFill.BackgroundColor3 = Color3.fromRGB(150, 255, 150)
+applyUICorner(progressFill)
+
+local loadingTween = TweenService:Create(progressFill, TweenInfo.new(3, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)})
+loadingTween:Play()
+loadingTween.Completed:Connect(function()
+    task.wait(0.2)
+    loadingFrame:Destroy()
+    mainFrame.Visible = true
+    mainFrame.Size = UDim2.new(0,0,0,0)
+    TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0.2, 0, 0.5, 0)
+    }):Play()
+end)
+
+-- =====================================================================================================================
+-- Button Logic for loading other scripts
+-- =====================================================================================================================
+local function loadScript(scriptUrl, scriptName)
+    local success, scriptContent = pcall(function()
+        return game:HttpGet(scriptUrl)
+    end)
+
+    if not success or not scriptContent then
+        statusLabel.Text = "Status: Error fetching " .. scriptName .. ": " .. tostring(scriptContent)
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        return
+    end
+
+    local success2, func = pcall(function()
+        return loadstring(scriptContent)
+    end)
+
+    if not success2 then
+        statusLabel.Text = "Status: Error loading " .. scriptName .. ": " .. tostring(func)
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        return
+    end
+
+    if func then
+        pcall(func, mainFrame, statusLabel, sharedFunctions)
+        statusLabel.Text = "Status: " .. scriptName .. " loaded."
+        statusLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+    else
+        statusLabel.Text = "Status: Failed to create function for " .. scriptName .. "."
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end
+
+local function createButton(name, text, position)
+    local button = Instance.new("TextButton")
+    button.Parent = menuPage
+    button.Name = name
+    button.Size = UDim2.new(0.9, 0, 0.1, 0)
+    button.Position = UDim2.new(0.05, 0, position, 0)
+    button.Text = text
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextScaled = true
+    applyUICorner(button)
+    applyUIStroke(button, Color3.fromRGB(70, 70, 70))
+    return button
+end
+
+local eggRandomizerButton = createButton("EggRandomizerButton", "Egg Randomizer", 0)
+eggRandomizerButton.MouseButton1Click:Connect(function()
+    loadScript(eggRandomizerURL, "Egg Randomizer")
+end)
+
+local petLevelUpButton = createButton("PetLevelUpButton", "Pet Level Up to 50", 0.15)
+petLevelUpButton.MouseButton1Click:Connect(function()
+    loadScript(petLevelUpAndMutationURL, "Pet Level Up")
+end)
+
+local mutationEspButton = createButton("MutationEspButton", "Mutation ESP", 0.3)
+mutationEspButton.MouseButton1Click:Connect(function()
+    loadScript(petLevelUpAndMutationURL, "Mutation ESP")
+end)
