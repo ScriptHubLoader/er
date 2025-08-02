@@ -1,298 +1,359 @@
--- =====================================================================================================================
--- EggRandomizer.lua: This script creates and manages the Egg Randomizer UI and functions.
--- It is designed to be loaded dynamically via loadstring.
--- =====================================================================================================================
-return function(mainFrame, statusLabel, sharedFunctions)
-    local EGG_CONTENTS = {
-        ["Anti Bee Egg"] = {
-            {name = "Wasp", chance = 55},
-            {name = "Tarantula Hawk", chance = 30},
-            {name = "Moth", chance = 13.75},
-            {name = "Butterfly", chance = 1},
-            {name = "Disco Bee", chance = 0.25},
-        },
-        ["Bee Egg"] = {
-            {name = "Bee", chance = 65},
-            {name = "Honey Bee", chance = 25},
-            {name = "Bear Bee", chance = 5},
-            {name = "Petal Bee", chance = 4},
-            {name = "Queen Bee", chance = 1},
-        },
-        ["Bug Egg"] = {
-            {name = "Snail", chance = 40},
-            {name = "Giant Ant", chance = 30},
-            {name = "Caterpillar", chance = 25},
-            {name = "Praying Mantis", chance = 4},
-            {name = "Dragonfly", chance = 1},
-        },
-        ["Common Egg"] = {
-            {name = "Golden Lab", chance = 33.33},
-            {name = "Dog", chance = 33.33},
-            {name = "Bunny", chance = 33.33},
-        },
-        ["Common Summer Egg"] = {
-            {name = "Starfish", chance = 50},
-            {name = "Seagull", chance = 25},
-            {name = "Crab", chance = 25},
-        },
-        ["Dinosaur Egg"] = {
-            {name = "Raptor", chance = 35},
-            {name = "Triceratops", chance = 32.5},
-            {name = "Stegosaurus", chance = 28},
-            {name = "Pterodactyl", chance = 3},
-            {name = "Brontosaurus", chance = 1},
-            {name = "T-Rex", chance = 0.5},
-        },
-        ["Exotic Bug Egg"] = { {name = "Unknown Exotic Bug Pet", chance = 100} },
-        ["Gourmet Egg"] = {
-            {name = "Bagel Bunny", chance = 50},
-            {name = "Pancake Mole", chance = 38},
-            {name = "Sushi Bear", chance = 7},
-            {name = "Spaghetti Sloth", chance = 4},
-            {name = "French Fry Ferret", chance = 1},
-        },
-        ["Legendary Egg"] = {
-            {name = "Cow", chance = 42.55},
-            {name = "Silver Monkey", chance = 42.55},
-            {name = "Sea Otter", chance = 10.64},
-            {name = "Turtle", chance = 2.13},
-            {name = "Polar Bear", chance = 2.13},
-        },
-        ["Mythical Egg"] = {
-            {name = "Grey Mouse", chance = 35.71},
-            {name = "Brown Mouse", chance = 26.79},
-            {name = "Squirrel", chance = 26.79},
-            {name = "Red Giant Ant", chance = 8.93},
-            {name = "Red Fox", chance = 1.79},
-        },
-        ["Night Egg"] = {
-            {name = "Hedgehog", chance = 49},
-            {name = "Mole", chance = 22},
-            {name = "Frog", chance = 14},
-            {name = "Echo Frog", chance = 10},
-            {name = "Night Owl", chance = 4},
-            {name = "Raccoon", chance = 1},
-        },
-        ["Oasis Egg"] = {
-            {name = "Meerkat", chance = 45},
-            {name = "Sand Snake", chance = 34.5},
-            {name = "Axolotl", chance = 15},
-            {name = "Hyacinth Macaw", chance = 5},
-            {name = "Fennec Fox", chance = 0.5},
-        },
-        ["Paradise Egg"] = {
-            {name = "Ostrich", chance = 40},
-            {name = "Peacock", chance = 30},
-            {name = "Capybara", chance = 21},
-            {name = "Scarlet Macaw", chance = 8},
-            {name = "Mimic Octopus", chance = 1},
-        },
-        ["Premium Anti Bee Egg"] = {
-            {name = "Wasp", chance = 55},
-            {name = "Tarantula Hawk", chance = 30},
-            {name = "Moth", chance = 13.75},
-            {name = "Butterfly", chance = 1},
-            {name = "Disco Bee", chance = 0.25},
-        },
-        ["Premium Night Egg"] = {
-            {name = "Hedgehog", chance = 49},
-            {name = "Mole", chance = 22},
-            {name = "Frog", chance = 14},
-            {name = "Echo Frog", chance = 10},
-            {name = "Night Owl", chance = 4},
-            {name = "Raccoon", chance = 1},
-        },
-        ["Premium Oasis Egg"] = {
-            {name = "Meerkat", chance = 45},
-            {name = "Sand Snake", chance = 34.5},
-            {name = "Axolotl", chance = 15},
-            {name = "Hyacinth Macaw", chance = 5},
-            {name = "Fennec Fox", chance = 0.5},
-        },
-        ["Premium Primal Egg"] = {
-            {name = "Parasaurolophus", chance = 34},
-            {name = "Iguanodon", chance = 32.5},
-            {name = "Pachycephalosaurus", chance = 28},
-            {name = "Dilophosaurus", chance = 3},
-            {name = "Ankylosaurus", chance = 1},
-            {name = "Spinosaurus", chance = 0.5},
-        },
-        ["Primal Egg"] = {
-            {name = "Parasaurolophus", chance = 34},
-            {name = "Iguanodon", chance = 32.5},
-            {name = "Pachycephalosaurus", chance = 28},
-            {name = "Dilophosaurus", chance = 3},
-            {name = "Ankylosaurus", chance = 1},
-            {name = "Spinosaurus", chance = 0.5},
-        },
-        ["Rainbow Premium Primal Egg"] = {
-            {name = "Parasaurolophus", chance = 34},
-            {name = "Iguanodon", chance = 32.5},
-            {name = "Pachycephalosaurus", chance = 28},
-            {name = "Dilophosaurus", chance = 3},
-            {name = "Ankylosaurus", chance = 1},
-            {name = "Spinosaurus", chance = 0.5},
-        },
-        ["Rare Egg"] = {
-            {name = "Orange Tabby", chance = 33.33},
-            {name = "Spotted Deer", chance = 25},
-            {name = "Pig", chance = 16.67},
-            {name = "Rooster", chance = 16.67},
-            {name = "Monkey", chance = 8.33},
-        },
-        ["Rare Summer Egg"] = {
-            {name = "Sea Turtle", chance = 33.33},
-            {name = "Flamingo", chance = 16.67},
-            {name = "Toucan", chance = 25},
-            {name = "Seal", chance = 10},
-            {name = "Orangutan", chance = 4},
-        },
-        ["Uncommon Egg"] = {
-            {name = "Black Bunny", chance = 25},
-            {name = "Chicken", chance = 25},
-            {name = "Cat", chance = 25},
-            {name = "Deer", chance = 25},
-        },
-        ["Zen Egg"] = {
-            {name = "Shiba Inu", chance = 40},
-            {name = "Nihonzaru", chance = 31},
-            {name = "Tanuki", chance = 20.82},
-            {name = "Tanchozuru", chance = 4.6},
-            {name = "Kappa", chance = 3.5},
-            {name = "Kitsune", chance = 0.08},
-        },
-    }
+-- egg esp + age pet to 50 + mutation esp.LUA - Separated 'Egg ESP' Script
 
-    local EggRandomizerPage = Instance.new("Frame")
-    EggRandomizerPage.Name = "EggRandomizerPage"
-    EggRandomizerPage.Size = UDim2.new(1, 0, 1, 0)
-    EggRandomizerPage.Parent = mainFrame
-    EggRandomizerPage.Visible = false
-    EggRandomizerPage.BorderSizePixel = 0
-    EggRandomizerPage.BackgroundTransparency = 1
+-- Services and References
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
-    local EggRandomizerLabel = Instance.new("TextLabel")
-    EggRandomizerLabel.Name = "EggRandomizerLabel"
-    EggRandomizerLabel.Text = "Egg Randomizer"
-    EggRandomizerLabel.Size = UDim2.new(1, 0, 0.1, 0)
-    EggRandomizerLabel.Position = UDim2.new(0, 0, 0, 0)
-    EggRandomizerLabel.Parent = EggRandomizerPage
-    EggRandomizerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    EggRandomizerLabel.TextScaled = true
-    EggRandomizerLabel.Font = Enum.Font.SourceSans
-    EggRandomizerLabel.BackgroundTransparency = 1
-    sharedFunctions.applyUICorner(EggRandomizerPage)
+local LocalPlayer = Players.LocalPlayer
 
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(0.9, 0, 0.2, 0)
-    toggleFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
-    toggleFrame.Parent = EggRandomizerPage
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    sharedFunctions.applyUICorner(toggleFrame)
+-- GUI references from the main script
+local mainFrame = screenGui:WaitForChild("MainFrame")
+local pagesContainer = mainFrame:WaitForChild("ScaleContainer"):WaitForChild("PagesContainer")
+local mainPage = pagesContainer:WaitForChild("MainPage")
 
-    local eggEspToggle = Instance.new("TextButton")
-    eggEspToggle.Name = "eggEspToggle"
-    eggEspToggle.Size = UDim2.new(0.9, 0, 0.3, 0)
-    eggEspToggle.Position = UDim2.new(0.05, 0, 0.1, 0)
-    eggEspToggle.Parent = toggleFrame
-    eggEspToggle.Text = "Egg ESP: OFF"
-    eggEspToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    eggEspToggle.TextScaled = true
-    eggEspToggle.Font = Enum.Font.SourceSans
-    sharedFunctions.applyUICorner(eggEspToggle)
-    eggEspToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-
-    local autoStopRarestToggle = Instance.new("TextButton")
-    autoStopRarestToggle.Name = "autoStopRarestToggle"
-    autoStopRarestToggle.Size = UDim2.new(0.9, 0, 0.3, 0)
-    autoStopRarestToggle.Position = UDim2.new(0.05, 0, 0.4, 0)
-    autoStopRarestToggle.Parent = toggleFrame
-    autoStopRarestToggle.Text = "Stop on Rarest: OFF"
-    autoStopRarestToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoStopRarestToggle.TextScaled = true
-    autoStopRarestToggle.Font = Enum.Font.SourceSans
-    sharedFunctions.applyUICorner(autoStopRarestToggle)
-    autoStopRarestToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-
-    local autoRandomizeToggle = Instance.new("TextButton")
-    autoRandomizeToggle.Name = "autoRandomizeToggle"
-    autoRandomizeToggle.Size = UDim2.new(0.9, 0, 0.3, 0)
-    autoRandomizeToggle.Position = UDim2.new(0.05, 0, 0.7, 0)
-    autoRandomizeToggle.Parent = toggleFrame
-    autoRandomizeToggle.Text = "Auto Randomize: OFF"
-    autoRandomizeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoRandomizeToggle.TextScaled = true
-    autoRandomizeToggle.Font = Enum.Font.SourceSans
-    sharedFunctions.applyUICorner(autoRandomizeToggle)
-    autoRandomizeToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-
-    local highlightingEnabled = false
-    local autoRandomizeEnabled = false
-    local stopOnRarestEnabled = false
-    local highlightedObjects = {}
-
-    local function unhighlightInstance(instance)
-        if highlightedObjects[instance] then
-            highlightedObjects[instance]:Destroy()
-            highlightedObjects[instance] = nil
-        end
-    end
-
-    local function highlightInstance(instance, color)
-        if not highlightedObjects[instance] then
-            local highlight = Instance.new("Highlight")
-            highlight.Parent = instance
-            highlight.FillColor = color
-            highlightedObjects[instance] = highlight
-        end
-    end
-
-    local function processInstance(instance)
-        if instance.Name:match("Egg") then
-            local eggType = instance.Name:sub(1, -5)
-            local eggContents = EGG_CONTENTS[eggType]
-            if eggContents then
-                local rarePets = {}
-                for pet, rarity in pairs(eggContents) do
-                    if rarity == "Rarest" then
-                        table.insert(rarePets, pet)
-                    end
-                end
-                if #rarePets > 0 then
-                    highlightInstance(instance, Color3.fromRGB(255, 255, 0))
-                else
-                    unhighlightInstance(instance)
-                end
-            end
-        end
-    end
-
-    eggEspToggle.MouseButton1Click:Connect(function()
-        highlightingEnabled = not highlightingEnabled
-        eggEspToggle.Text = "Egg ESP: " .. (highlightingEnabled and "ON" or "OFF")
-        if not highlightingEnabled then
-            for instance, highlight in pairs(highlightedObjects) do
-                highlight:Destroy()
-            end
-            highlightedObjects = {}
-        end
-    end)
-
-    autoRandomizeToggle.MouseButton1Click:Connect(function()
-        autoRandomizeEnabled = not autoRandomizeEnabled
-        autoRandomizeToggle.Text = "Auto Randomize: " .. (autoRandomizeEnabled and "ON" or "OFF")
-    end)
-
-    stopOnRarestToggle.MouseButton1Click:Connect(function()
-        stopOnRarestEnabled = not stopOnRarestEnabled
-        stopOnRarestToggle.Text = "Stop on Rarest: " .. (stopOnRarestEnabled and "ON" or "OFF")
-    end)
-    
-    for _, child in pairs(mainFrame:GetChildren()) do
-        if child:IsA("Frame") and child.Name ~= "headerFrame" and child.Name ~= "menuPage" then
-            child.Visible = false
-        end
-    end
-    EggRandomizerPage.Visible = true
-    statusLabel.Text = "Status: Egg Randomizer loaded."
+-- Utility Functions (re-defined or copied for this script to be standalone if loaded separately)
+local function applyUICorner(inst, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = radius or UDim.new(0, 10)
+	corner.Parent = inst
 end
+
+local function applyUIStroke(inst, color, thickness, transparency)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color or Color3.new(0, 0, 0)
+	stroke.Thickness = thickness or 1
+	stroke.Transparency = transparency or 0
+	stroke.Parent = inst
+end
+
+local function addTextShadow(label)
+	if label:FindFirstChild("Shadow") then return end
+	local shadow = Instance.new("TextLabel")
+	shadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+	shadow.TextTransparency = 0.3
+	shadow.Position = UDim2.new(0, 2, 0, 2)
+	shadow.ZIndex = label.ZIndex - 1
+	shadow.TextStrokeTransparency = 1
+	shadow.Name = "Shadow"
+	shadow.Font = label.Font
+	shadow.Text = label.Text
+	shadow.TextSize = label.TextSize
+	shadow.TextXAlignment = label.TextXAlignment
+	shadow.TextYAlignment = label.TextYAlignment
+	shadow.Size = label.Size
+	shadow.BackgroundTransparency = 1
+	shadow.Parent = label
+end
+
+local function applyStyledText(label)
+	label.Font = Enum.Font.FredokaOne
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextStrokeTransparency = 1
+	addTextShadow(label)
+end
+
+-- Egg ESP Configuration and State
+local eggEspEnabled = false
+local eggEspToggleCooldown = false
+local espFrames = {}
+local highlightedEgg = nil
+local highlightFrame = Instance.new("BillboardGui")
+highlightFrame.Adornee = nil -- Set in updateHighlightedEgg
+highlightFrame.Size = UDim2.new(0, 50, 0, 25)
+highlightFrame.AlwaysOnTop = true
+highlightFrame.ZIndex = 10
+highlightFrame.ExtentsOffset = Vector3.new(0, 1.5, 0)
+
+local highlightText = Instance.new("TextLabel")
+highlightText.Text = "✨ ✨ ✨"
+highlightText.Size = UDim2.new(1, 0, 1, 0)
+highlightText.TextScaled = true
+highlightText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+highlightText.TextStrokeTransparency = 0
+highlightText.Font = Enum.Font.FredokaOne
+highlightText.BackgroundTransparency = 1
+highlightText.TextColor3 = Color3.fromRGB(255, 255, 0)
+highlightText.Parent = highlightFrame
+
+-- Egg Content Data
+local EGG_CONTENTS = {
+	["Anti Bee Egg"] = {
+		{name = "Wasp", chance = 55},
+		{name = "Tarantula Hawk", chance = 30},
+		{name = "Moth", chance = 13.75},
+		{name = "Butterfly", chance = 1},
+		{name = "Disco Bee", chance = 0.25},
+	},
+	["Bee Egg"] = {
+		{name = "Bee", chance = 65},
+		{name = "Honey Bee", chance = 25},
+		{name = "Bear Bee", chance = 5},
+		{name = "Petal Bee", chance = 4},
+		{name = "Queen Bee", chance = 1},
+	},
+	["Creeper Egg"] = {
+		{name = "Creeper", chance = 55},
+		{name = "Spore", chance = 30},
+		{name = "Glow Shroom", chance = 13.75},
+		{name = "Wisp", chance = 1},
+		{name = "Flesh Shroom", chance = 0.25},
+	},
+	["Death Egg"] = {
+		{name = "Death", chance = 65},
+		{name = "Fallen Angel", chance = 25},
+		{name = "Reaper", chance = 5},
+		{name = "Devil", chance = 4},
+		{name = "Lucifer", chance = 1},
+	},
+	["Fairy Egg"] = {
+		{name = "Fairy", chance = 55},
+		{name = "Mystic Fairy", chance = 30},
+		{name = "Sprite", chance = 13.75},
+		{name = "Forest Sprite", chance = 1},
+		{name = "Celestial Fairy", chance = 0.25},
+	},
+	["Fire Egg"] = {
+		{name = "Fire", chance = 65},
+		{name = "Ash", chance = 25},
+		{name = "Ember", chance = 5},
+		{name = "Flame", chance = 4},
+		{name = "Phoenix", chance = 1},
+	},
+	["Gem Egg"] = {
+		{name = "Gem", chance = 55},
+		{name = "Ruby", chance = 30},
+		{name = "Sapphire", chance = 13.75},
+		{name = "Emerald", chance = 1},
+		{name = "Diamond", chance = 0.25},
+	},
+	["Ghost Egg"] = {
+		{name = "Ghost", chance = 55},
+		{name = "Spirit", chance = 30},
+		{name = "Shade", chance = 13.75},
+		{name = "Poltergeist", chance = 1},
+		{name = "Wraith", chance = 0.25},
+	},
+	["Ice Egg"] = {
+		{name = "Ice", chance = 65},
+		{name = "Snow", chance = 25},
+		{name = "Blizzard", chance = 5},
+		{name = "Frost", chance = 4},
+		{name = "Permafrost", chance = 1},
+	},
+	["Light Egg"] = {
+		{name = "Light", chance = 55},
+		{name = "Shine", chance = 30},
+		{name = "Gleam", chance = 13.75},
+		{name = "Beam", chance = 1},
+		{name = "Sun", chance = 0.25},
+	},
+	["Pixiemo Egg"] = {
+		{name = "Pixiemo", chance = 55},
+		{name = "Mystic Pixiemo", chance = 30},
+		{name = "Crystal Pixiemo", chance = 13.75},
+		{name = "Cosmic Pixiemo", chance = 1},
+		{name = "Rainbow Pixiemo", chance = 0.25},
+	},
+	["Pixiemo Egg (V2)"] = {
+		{name = "Pixiemo", chance = 55},
+		{name = "Mystic Pixiemo", chance = 30},
+		{name = "Crystal Pixiemo", chance = 13.75},
+		{name = "Cosmic Pixiemo", chance = 1},
+		{name = "Rainbow Pixiemo", chance = 0.25},
+	},
+	["Sand Egg"] = {
+		{name = "Sand", chance = 65},
+		{name = "Dust", chance = 25},
+		{name = "Dirt", chance = 5},
+		{name = "Grit", chance = 4},
+		{name = "Dunes", chance = 1},
+	},
+	["Spooky Egg"] = {
+		{name = "Spooky", chance = 55},
+		{name = "Creepy", chance = 30},
+		{name = "Haunt", chance = 13.75},
+		{name = "Terror", chance = 1},
+		{name = "Horror", chance = 0.25},
+	},
+	["Spooky Egg (V2)"] = {
+		{name = "Spooky", chance = 55},
+		{name = "Creepy", chance = 30},
+		{name = "Haunt", chance = 13.75},
+		{name = "Terror", chance = 1},
+		{name = "Horror", chance = 0.25},
+	},
+	["Spooky Egg (V3)"] = {
+		{name = "Spooky", chance = 55},
+		{name = "Creepy", chance = 30},
+		{name = "Haunt", chance = 13.75},
+		{name = "Terror", chance = 1},
+		{name = "Horror", chance = 0.25},
+	},
+	["Spooky Egg (V4)"] = {
+		{name = "Spooky", chance = 55},
+		{name = "Creepy", chance = 30},
+		{name = "Haunt", chance = 13.75},
+		{name = "Terror", chance = 1},
+		{name = "Horror", chance = 0.25},
+	},
+	["Toxic Egg"] = {
+		{name = "Toxic", chance = 65},
+		{name = "Acid", chance = 25},
+		{name = "Slime", chance = 5},
+		{name = "Venom", chance = 4},
+		{name = "Poison", chance = 1},
+	},
+	["Water Egg"] = {
+		{name = "Water", chance = 65},
+		{name = "Rain", chance = 25},
+		{name = "Mist", chance = 5},
+		{name = "Torrent", chance = 4},
+		{name = "Tsunami", chance = 1},
+	},
+	["Water Egg (V2)"] = {
+		{name = "Water", chance = 65},
+		{name = "Rain", chance = 25},
+		{name = "Mist", chance = 5},
+		{name = "Torrent", chance = 4},
+		{name = "Tsunami", chance = 1},
+	},
+}
+
+-- Functions for Egg ESP
+local function createEggESPFrame(egg)
+	local frame = Instance.new("BillboardGui")
+	frame.Adornee = egg
+	frame.Size = UDim2.new(0, 150, 0, 75) -- Adjusted size for better visibility
+	frame.AlwaysOnTop = true
+	frame.ZIndex = 5
+	frame.ExtentsOffset = Vector3.new(0, 1.5, 0) -- Raised the ESP to be slightly above the egg
+	frame.Parent = Workspace
+
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 1, 0)
+	container.BackgroundTransparency = 0.75
+	container.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	container.Parent = frame
+	applyUICorner(container, UDim.new(1, 0))
+
+	local eggName = Instance.new("TextLabel")
+	eggName.Size = UDim2.new(1, 0, 0, 20)
+	eggName.Position = UDim2.new(0, 0, 0, 0)
+	eggName.BackgroundTransparency = 1
+	eggName.Text = egg.Name:gsub("Egg", ""):gsub("V%d", ""):gsub("()$", "") .. " Egg"
+	eggName.Font = Enum.Font.FredokaOne
+	eggName.TextSize = 18
+	eggName.TextColor3 = Color3.fromRGB(255, 255, 255)
+	eggName.Parent = container
+	addTextShadow(eggName)
+
+	local list = Instance.new("TextLabel")
+	list.Size = UDim2.new(1, -10, 0, 50)
+	list.Position = UDim2.new(0, 5, 0, 20)
+	list.BackgroundTransparency = 1
+	list.TextXAlignment = Enum.TextXAlignment.Left
+	list.Font = Enum.Font.FredokaOne
+	list.TextSize = 14
+	list.TextColor3 = Color3.fromRGB(255, 255, 255)
+	list.Parent = container
+	addTextShadow(list)
+	local eggContents = EGG_CONTENTS[egg.Name]
+	if eggContents then
+		local contentString = ""
+		for _, content in ipairs(eggContents) do
+			contentString = contentString .. content.name .. " (" .. content.chance .. "%) \n"
+		end
+		list.Text = contentString
+	else
+		list.Text = "Contents not found."
+	end
+
+	return frame
+end
+
+local function updateEggESP()
+	for _, frame in pairs(espFrames) do
+		frame:Destroy()
+	end
+	espFrames = {}
+	if eggEspEnabled then
+		for _, part in pairs(Workspace:GetDescendants()) do
+			if part.Name:match("Egg") and part:IsA("BasePart") then
+				local frame = createEggESPFrame(part)
+				espFrames[part] = frame
+			end
+		end
+	end
+end
+
+local function updateHighlightedEgg()
+	if eggEspEnabled then
+		local closestEgg = nil
+		local minDistance = math.huge
+		for egg, _ in pairs(espFrames) do
+			local distance = (LocalPlayer.Character.HumanoidRootPart.Position - egg.Position).Magnitude
+			if distance < minDistance then
+				minDistance = distance
+				closestEgg = egg
+			end
+		end
+		if closestEgg and minDistance < 10 then -- Highlight only if close
+			highlightedEgg = closestEgg
+			highlightFrame.Adornee = highlightedEgg
+			highlightFrame.Parent = Workspace
+		else
+			highlightedEgg = nil
+			highlightFrame.Parent = nil
+		end
+	else
+		highlightedEgg = nil
+		highlightFrame.Parent = nil
+	end
+end
+
+-- GUI Elements for this script
+local eggEspBtn = Instance.new("TextButton")
+eggEspBtn.Name = "EggEspButton"
+eggEspBtn.Text = "🥚 Egg ESP: Off"
+eggEspBtn.Size = UDim2.new(0, 190, 0, 30)
+eggEspBtn.Position = UDim2.new(0.5, -95, 0, 50)
+eggEspBtn.BackgroundColor3 = Color3.fromRGB(150, 190, 130)
+eggEspBtn.Parent = mainPage
+applyUICorner(eggEspBtn, UDim.new(0, 10))
+applyUIStroke(eggEspBtn, Color3.fromRGB(80, 110, 70), 2, 0)
+applyStyledText(eggEspBtn)
+
+local eggRandomizerBtn = Instance.new("TextButton")
+eggRandomizerBtn.Name = "EggRandomizerButton"
+eggRandomizerBtn.Text = "🎲 Egg Randomizer"
+eggRandomizerBtn.Size = UDim2.new(0, 190, 0, 30)
+eggRandomizerBtn.Position = UDim2.new(0.5, -95, 0, 90)
+eggRandomizerBtn.BackgroundColor3 = Color3.fromRGB(150, 190, 130)
+eggRandomizerBtn.Parent = mainPage
+applyUICorner(eggRandomizerBtn, UDim.new(0, 10))
+applyUIStroke(eggRandomizerBtn, Color3.fromRGB(80, 110, 70), 2, 0)
+applyStyledText(eggRandomizerBtn)
+
+
+-- Connections
+eggEspBtn.MouseButton1Click:Connect(function()
+	if not eggEspToggleCooldown then
+		eggEspToggleCooldown = true
+		eggEspEnabled = not eggEspEnabled
+		eggEspBtn.Text = "🥚 Egg ESP: " .. (eggEspEnabled and "On" or "Off")
+		updateEggESP()
+
+		-- Cooldown to prevent spam clicking
+		task.delay(0.5, function()
+			eggEspToggleCooldown = false
+		end)
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if eggEspEnabled then
+		updateEggESP()
+		updateHighlightedEgg()
+	end
+end)
