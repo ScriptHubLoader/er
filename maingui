@@ -251,10 +251,29 @@ versionLabel.TextColor3 = Color3.fromRGB(80, 110, 70) -- Set color before adding
 versionLabel.TextStrokeTransparency = 1
 addTextShadow(versionLabel)
 
--- Load other scripts using loadstring and game:HttpGet
--- You MUST replace these URLs with the actual raw content URLs of your scripts.
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/eggrandomizer"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp"))()
+-- Load other scripts using game:HttpGet
+-- Ensure you have the correct raw URLs for your scripts here.
+local eggScriptCode = game:HttpGet(""https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/eggrandomizer")
+local petMutationScriptCode = game:HttpGet("https://raw.githubusercontent.com/ScriptHubLoader/er/refs/heads/main/petage-mutationesp")
+
+-- Create a new environment for the loaded scripts and pass the necessary variables.
+local function loadAndExecuteScript(code)
+	local f = load(code)
+	local newEnv = {
+		screenGui = screenGui,
+		TweenService = TweenService,
+		Players = Players,
+		Workspace = Workspace,
+		RunService = RunService,
+		LocalPlayer = LocalPlayer,
+		-- Pass any other necessary globals to the script
+	}
+	setfenv(f, newEnv)
+	f()
+end
+
+loadAndExecuteScript(eggScriptCode)
+loadAndExecuteScript(petMutationScriptCode)
 
 -- Dragging logic for minimized button
 local minimizedBtnDrag = false
