@@ -1,0 +1,157 @@
+-- =====================================================================================================================
+-- PetLevelUpAndMutation.lua: This script creates and manages the Pet Level Up and Mutation ESP UI and functions.
+-- It is designed to be loaded dynamically via loadstring.
+-- =====================================================================================================================
+return function(mainFrame, statusLabel, sharedFunctions)
+    -- =================================================================================================================
+    -- Pet Level Up to 50 Logic (Example)
+    -- =================================================================================================================
+    local function instantAgePet(pet)
+        -- This is a placeholder for your actual game logic to age a pet to level 50.
+        -- You would need to find the in-game function or remote event for this.
+        -- Example:
+        -- game.ReplicatedStorage.RemoteEvents.AgePet:FireServer(pet, 50)
+        -- For demonstration, we will just print a message.
+        if pet and pet:IsA("Model") then
+            print("Attempting to age pet: " .. pet.Name .. " to level 50.")
+            statusLabel.Text = "Status: Aging " .. pet.Name .. " to level 50."
+            statusLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+            task.wait(1)
+            statusLabel.Text = "Status: Aged pet."
+            statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        else
+            statusLabel.Text = "Status: Please select a pet to age."
+            statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        end
+    end
+
+    -- =================================================================================================================
+    -- Mutation ESP Logic (Example)
+    -- =================================================================================================================
+    local mutationESPToggleEnabled = false
+    local highlightedObjects = {}
+
+    local function unhighlightInstance(instance)
+        if highlightedObjects[instance] then
+            highlightedObjects[instance]:Destroy()
+            highlightedObjects[instance] = nil
+        end
+    end
+
+    local function highlightInstance(instance, color)
+        if not highlightedObjects[instance] then
+            local highlight = Instance.new("Highlight")
+            highlight.Parent = instance
+            highlight.FillColor = color
+            highlightedObjects[instance] = highlight
+        end
+    end
+
+    local function findAndHighlightMutationMachines()
+        local function isMutationMachine(instance)
+            -- You would need to define what a mutation machine looks like in your game.
+            -- This is a placeholder. For example, it might be a Part named "MutationMachine" or have a specific tag.
+            return instance.Name == "MutationMachine" or instance:GetAttribute("IsMutationMachine")
+        end
+
+        for _, instance in pairs(workspace:GetDescendants()) do
+            if isMutationMachine(instance) then
+                highlightInstance(instance, Color3.fromRGB(255, 0, 255)) -- Magenta color for mutation machines
+            end
+        end
+    end
+
+    local function stopHighlightingMutationMachines()
+        for _, highlight in pairs(highlightedObjects) do
+            highlight:Destroy()
+        end
+        highlightedObjects = {}
+    end
+
+    -- =================================================================================================================
+    -- GUI Setup for this script
+    -- =================================================================================================================
+    local petLevelUpAndMutationPage = Instance.new("Frame")
+    petLevelUpAndMutationPage.Name = "petLevelUpAndMutationPage"
+    petLevelUpAndMutationPage.Size = UDim2.new(1, 0, 1, 0)
+    petLevelUpAndMutationPage.Parent = mainFrame
+    petLevelUpAndMutationPage.Visible = true
+    petLevelUpAndMutationPage.BorderSizePixel = 0
+    petLevelUpAndMutationPage.BackgroundTransparency = 1
+
+    local petLevelUpLabel = Instance.new("TextLabel")
+    petLevelUpLabel.Name = "PetLevelUpLabel"
+    petLevelUpLabel.Text = "Pet Level Up"
+    petLevelUpLabel.Size = UDim2.new(1, 0, 0.1, 0)
+    petLevelUpLabel.Position = UDim2.new(0, 0, 0, 0)
+    petLevelUpLabel.Parent = petLevelUpAndMutationPage
+    petLevelUpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    petLevelUpLabel.TextScaled = true
+    petLevelUpLabel.Font = Enum.Font.SourceSans
+    petLevelUpLabel.BackgroundTransparency = 1
+
+    local levelUpButton = Instance.new("TextButton")
+    levelUpButton.Name = "InstantAgeButton"
+    levelUpButton.Size = UDim2.new(0.9, 0, 0.1, 0)
+    levelUpButton.Position = UDim2.new(0.05, 0, 0.15, 0)
+    levelUpButton.Parent = petLevelUpAndMutationPage
+    levelUpButton.Text = "Instant Age Pet to 50"
+    levelUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    levelUpButton.TextScaled = true
+    levelUpButton.Font = Enum.Font.SourceSans
+    levelUpButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    sharedFunctions.applyUICorner(levelUpButton)
+
+    local mutationEspLabel = Instance.new("TextLabel")
+    mutationEspLabel.Name = "MutationEspLabel"
+    mutationEspLabel.Text = "Mutation ESP"
+    mutationEspLabel.Size = UDim2.new(1, 0, 0.1, 0)
+    mutationEspLabel.Position = UDim2.new(0, 0, 0.35, 0)
+    mutationEspLabel.Parent = petLevelUpAndMutationPage
+    mutationEspLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    mutationEspLabel.TextScaled = true
+    mutationEspLabel.Font = Enum.Font.SourceSans
+    mutationEspLabel.BackgroundTransparency = 1
+
+    local mutationEspToggle = Instance.new("TextButton")
+    mutationEspToggle.Name = "mutationEspToggle"
+    mutationEspToggle.Size = UDim2.new(0.9, 0, 0.1, 0)
+    mutationEspToggle.Position = UDim2.new(0.05, 0, 0.45, 0)
+    mutationEspToggle.Parent = petLevelUpAndMutationPage
+    mutationEspToggle.Text = "Mutation ESP: OFF"
+    mutationEspToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    mutationEspToggle.TextScaled = true
+    mutationEspToggle.Font = Enum.Font.SourceSans
+    mutationEspToggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    sharedFunctions.applyUICorner(mutationEspToggle)
+
+    -- =================================================================================================================
+    -- Event Handlers
+    -- =================================================================================================================
+    levelUpButton.MouseButton1Click:Connect(function()
+        -- You would need to get the selected pet here. This is a placeholder.
+        local selectedPet = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("MyPet")
+        instantAgePet(selectedPet)
+    end)
+
+    mutationEspToggle.MouseButton1Click:Connect(function()
+        mutationESPToggleEnabled = not mutationESPToggleEnabled
+        mutationEspToggle.Text = "Mutation ESP: " .. (mutationESPToggleEnabled and "ON" or "OFF")
+        if mutationESPToggleEnabled then
+            findAndHighlightMutationMachines()
+        else
+            stopHighlightingMutationMachines()
+        end
+    end)
+
+    -- =================================================================================================================
+    -- Initial Page Display Logic
+    -- =================================================================================================================
+    for _, child in pairs(mainFrame:GetChildren()) do
+        if child:IsA("Frame") and child.Name ~= "headerFrame" and child.Name ~= "menuPage" then
+            child.Visible = false
+        end
+    end
+    petLevelUpAndMutationPage.Visible = true
+    statusLabel.Text = "Status: Pet functions loaded."
+end
